@@ -15,6 +15,8 @@ import { isFirebaseError } from '$/firebase/errors';
 export type FirebaseAuthContextValue = {
   firebaseAuth: Auth;
   user: User | null;
+  emailVerified: boolean | null;
+  reloadUser: () => Promise<void>;
   retrieveToken: (forceRefresh?: boolean) => Promise<string | undefined>;
   redirectError: FirebaseError | undefined;
 };
@@ -33,6 +35,8 @@ export const useFirebaseAuthContextValue = (
 
   // undefined means user state hasn't been retrieved yet, null means user state has been retrieved and there is no user
   const [user, setUser] = useState<User | null | undefined>();
+  const [emailVerified, setEmailVerified] = useState<boolean | null | undefined>();
+
   const [redirectError, setRedirectError] = useState<FirebaseError>();
 
   const retrieveToken = useCallback(
@@ -44,6 +48,20 @@ export const useFirebaseAuthContextValue = (
     () => (firebaseApp ? getAuth(firebaseApp) : undefined),
     [firebaseApp]
   );
+
+  const reloadUser = useCallback(async () => {
+    if (!firebaseAuth) {
+      setUser(undefined);
+      setEmailVerified(undefined);
+    } else {
+      if (firebaseAuth.currentUser) {
+        await firebaseAuth.currentUser.reload();
+      }
+
+      setUser(firebaseAuth.currentUser);
+      setEmailVerified(firebaseAuth.currentUser?.emailVerified ?? null);
+    }
+  }, [user, firebaseAuth]);
 
   useEffect(() => {
     setFirebaseApp(initializeApp(firebaseOptions));
@@ -67,19 +85,21 @@ export const useFirebaseAuthContextValue = (
 
     const unsubscriber = onIdTokenChanged(firebaseAuth, (newUser) => {
       setUser(newUser);
+      setEmailVerified(newUser?.emailVerified ?? null);
     });
 
     return () => {
       setUser(undefined);
+      setEmailVerified(undefined);
       unsubscriber();
     };
   }, [firebaseAuth]);
 
-  if (!firebaseAuth || user === undefined) {
+  if (!firebaseAuth || user === undefined || emailVerified === undefined) {
     return null;
   }
 
-  return { firebaseAuth, user, retrieveToken, redirectError };
+  return { firebaseAuth, user, emailVerified, reloadUser, retrieveToken, redirectError };
 };
 
 export type FirebaseAuthContextProviderProps = {
