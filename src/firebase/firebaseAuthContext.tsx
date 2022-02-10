@@ -11,11 +11,12 @@ import {
   useCallback,
 } from 'react';
 import { isFirebaseError } from '$/firebase/errors';
+import { FirebaseUser } from '$/firebase/firebaseUser';
 
 export type FirebaseAuthContextValue = {
   firebaseAuth: Auth;
-  user: User | null;
-  emailVerified: boolean | null;
+  rawUser: User | null;
+  user: FirebaseUser | null;
   reloadUser: () => Promise<void>;
   retrieveToken: (forceRefresh?: boolean) => Promise<string | undefined>;
   redirectError: FirebaseError | undefined;
@@ -35,7 +36,7 @@ export const useFirebaseAuthContextValue = (
 
   // undefined means user state hasn't been retrieved yet, null means user state has been retrieved and there is no user
   const [user, setUser] = useState<User | null | undefined>();
-  const [emailVerified, setEmailVerified] = useState<boolean | null | undefined>();
+  const [jsonUser, setJsonUser] = useState<FirebaseUser | null | undefined>();
 
   const [redirectError, setRedirectError] = useState<FirebaseError>();
 
@@ -52,14 +53,13 @@ export const useFirebaseAuthContextValue = (
   const reloadUser = useCallback(async () => {
     if (!firebaseAuth) {
       setUser(undefined);
-      setEmailVerified(undefined);
+      setJsonUser(undefined);
     } else {
       if (firebaseAuth.currentUser) {
         await firebaseAuth.currentUser.reload();
       }
-
       setUser(firebaseAuth.currentUser);
-      setEmailVerified(firebaseAuth.currentUser?.emailVerified ?? null);
+      setJsonUser((firebaseAuth.currentUser?.toJSON() as FirebaseUser) ?? null);
     }
   }, [user, firebaseAuth]);
 
@@ -85,21 +85,21 @@ export const useFirebaseAuthContextValue = (
 
     const unsubscriber = onIdTokenChanged(firebaseAuth, (newUser) => {
       setUser(newUser);
-      setEmailVerified(newUser?.emailVerified ?? null);
+      setJsonUser((newUser?.toJSON() as FirebaseUser) ?? null);
     });
 
     return () => {
       setUser(undefined);
-      setEmailVerified(undefined);
+      setJsonUser(undefined);
       unsubscriber();
     };
   }, [firebaseAuth]);
 
-  if (!firebaseAuth || user === undefined || emailVerified === undefined) {
+  if (!firebaseAuth || user === undefined || jsonUser === undefined) {
     return null;
   }
 
-  return { firebaseAuth, user, emailVerified, reloadUser, retrieveToken, redirectError };
+  return { firebaseAuth, rawUser: user, user: jsonUser, reloadUser, retrieveToken, redirectError };
 };
 
 export type FirebaseAuthContextProviderProps = {

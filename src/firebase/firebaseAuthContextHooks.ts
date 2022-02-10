@@ -53,28 +53,28 @@ export const useCreateUserWithEmailAndPassword = (): OmitFirstArg<
 export const useLinkWithCredential = (): ((
   credential: AuthCredential
 ) => Promise<UserCredential>) => {
-  const { user } = useFirebaseAuthContext();
+  const { rawUser } = useFirebaseAuthContext();
 
   return useCallback(
     (credential: AuthCredential) => {
-      if (!user) {
+      if (!rawUser) {
         throw new Error('User is not valid');
       }
-      return linkWithCredential(user, credential);
+      return linkWithCredential(rawUser, credential);
     },
-    [user]
+    [rawUser]
   );
 };
 
 export const useSendEmailVerification = (): (() => Promise<void>) => {
-  const { user } = useFirebaseAuthContext();
+  const { rawUser } = useFirebaseAuthContext();
 
   return useCallback(() => {
-    if (!user) {
+    if (!rawUser) {
       throw new Error('User is not valid');
     }
-    return sendEmailVerification(user);
-  }, [user]);
+    return sendEmailVerification(rawUser);
+  }, [rawUser]);
 };
 
 export const useSendPasswordResetEmail = (): OmitFirstArg<typeof sendPasswordResetEmail> =>
@@ -93,16 +93,16 @@ export const useSignOut = (): OmitFirstArg<typeof signOut> =>
   useWrappedFirebaseAuthFunction(signOut);
 
 export const useUnlink = (): ((providerId: string) => Promise<User>) => {
-  const { user } = useFirebaseAuthContext();
+  const { rawUser } = useFirebaseAuthContext();
 
   return useCallback(
     (providerId: string) => {
-      if (!user) {
+      if (!rawUser) {
         throw new Error('User is not valid');
       }
-      return unlink(user, providerId);
+      return unlink(rawUser, providerId);
     },
-    [user]
+    [rawUser]
   );
 };
 
