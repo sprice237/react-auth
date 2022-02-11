@@ -1,3 +1,4 @@
+import { useUpdatePassword } from './firebase/firebaseAuthContextHooks';
 import { useState } from 'react';
 import { getFirebaseErrorMessage } from '$/firebase/errors';
 import {
@@ -135,6 +136,48 @@ export const usePasswordRegistrationForm = (): PasswordRegistrationFormState => 
     setError(undefined);
     try {
       await createUserWithEmailAndPassword(email, password);
+    } catch (e) {
+      setError(getFirebaseErrorMessage(e));
+    } finally {
+      setInProgress(false);
+    }
+  };
+
+  return { error, inProgress, submit };
+};
+
+export interface ChangePasswordFormData {
+  currentPassword: string;
+  newPassword: string;
+  newPasswordConfirm: string;
+}
+
+export type ChangePasswordFormState = {
+  error: string | undefined;
+  inProgress: boolean;
+  submit: (formData: ChangePasswordFormData) => Promise<void>;
+};
+
+export const useChangePasswordForm = (): ChangePasswordFormState => {
+  const updatePassword = useUpdatePassword();
+  const [inProgress, setInProgress] = useState(false);
+
+  const [error, setError] = useState<string | undefined>();
+
+  const submit = async ({
+    currentPassword,
+    newPassword,
+    newPasswordConfirm,
+  }: ChangePasswordFormData) => {
+    if (newPassword !== newPasswordConfirm) {
+      setError('New passwords do not match');
+      return;
+    }
+
+    setInProgress(true);
+    setError(undefined);
+    try {
+      await updatePassword(currentPassword, newPassword);
     } catch (e) {
       setError(getFirebaseErrorMessage(e));
     } finally {

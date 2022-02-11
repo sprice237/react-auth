@@ -5,6 +5,7 @@ import {
   confirmPasswordReset,
   createUserWithEmailAndPassword,
   linkWithCredential,
+  reauthenticateWithCredential,
   sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
@@ -12,9 +13,11 @@ import {
   signInWithRedirect,
   signOut,
   unlink,
+  updatePassword,
   verifyPasswordResetCode,
   AuthCredential,
   UserCredential,
+  EmailAuthProvider,
 } from 'firebase/auth';
 import { useCallback } from 'react';
 import { useFirebaseAuthContext } from './firebaseAuthContext';
@@ -91,6 +94,30 @@ export const useSignInWithRedirect = (): OmitFirstArg<typeof signInWithRedirect>
 
 export const useSignOut = (): OmitFirstArg<typeof signOut> =>
   useWrappedFirebaseAuthFunction(signOut);
+
+export const useUpdatePassword = (): ((
+  currentPassword: string,
+  newPassword: string
+) => Promise<void>) => {
+  const { rawUser } = useFirebaseAuthContext();
+
+  return useCallback(
+    async (currentPassword: string, newPassword: string) => {
+      if (!rawUser) {
+        throw new Error('User is not valid');
+      }
+
+      if (!rawUser.email) {
+        throw new Error('User does not have an email address');
+      }
+
+      const credential = EmailAuthProvider.credential(rawUser.email, currentPassword);
+      await reauthenticateWithCredential(rawUser, credential);
+      return updatePassword(rawUser, newPassword);
+    },
+    [rawUser]
+  );
+};
 
 export const useUnlink = (): ((providerId: string) => Promise<User>) => {
   const { rawUser } = useFirebaseAuthContext();
