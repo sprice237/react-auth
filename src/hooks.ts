@@ -1,5 +1,6 @@
 import { useUpdatePassword } from './firebase/firebaseAuthContextHooks';
 import { useState } from 'react';
+import { ActionCodeSettings } from '@firebase/auth';
 import { getFirebaseErrorMessage } from '$/firebase/errors';
 import {
   useConfirmPasswordReset,
@@ -24,12 +25,12 @@ export const useEmailVerificationForm = (): EmailVerificationFormState => {
 
   const [error, setError] = useState<string | undefined>();
 
-  const submit = async () => {
+  const submit = async (actionCodeSettings?: ActionCodeSettings | null) => {
     setInProgress(true);
     setIsComplete(false);
     setError(undefined);
     try {
-      await sendEmailVerification();
+      await sendEmailVerification(actionCodeSettings);
       setIsComplete(true);
     } catch (e) {
       setError(getFirebaseErrorMessage(e));

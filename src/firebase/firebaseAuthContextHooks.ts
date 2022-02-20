@@ -18,6 +18,7 @@ import {
   AuthCredential,
   UserCredential,
   EmailAuthProvider,
+  ActionCodeSettings,
 } from 'firebase/auth';
 import { useCallback } from 'react';
 import { useFirebaseAuthContext } from './firebaseAuthContext';
@@ -69,15 +70,20 @@ export const useLinkWithCredential = (): ((
   );
 };
 
-export const useSendEmailVerification = (): (() => Promise<void>) => {
+export const useSendEmailVerification = (): ((
+  actionCodeSettings?: ActionCodeSettings | null
+) => Promise<void>) => {
   const { rawUser } = useFirebaseAuthContext();
 
-  return useCallback(() => {
-    if (!rawUser) {
-      throw new Error('User is not valid');
-    }
-    return sendEmailVerification(rawUser);
-  }, [rawUser]);
+  return useCallback(
+    (actionCodeSettings?: ActionCodeSettings | null) => {
+      if (!rawUser) {
+        throw new Error('User is not valid');
+      }
+      return sendEmailVerification(rawUser, actionCodeSettings);
+    },
+    [rawUser]
+  );
 };
 
 export const useSendPasswordResetEmail = (): OmitFirstArg<typeof sendPasswordResetEmail> =>
