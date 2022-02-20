@@ -15,7 +15,7 @@ export type EmailVerificationFormState = {
   error: string | undefined;
   inProgress: boolean;
   isComplete: boolean;
-  submit: () => Promise<void>;
+  submit: (actionCodeSettings?: ActionCodeSettings | null) => Promise<void>;
 };
 
 export const useEmailVerificationForm = (): EmailVerificationFormState => {
