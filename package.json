@@ -1,6 +1,6 @@
 {
   "name": "@sprice237/react-auth",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "author": "Sean Price <sean@seanprice.io>",
   "exports": {
     ".": "./dist/index.js"
